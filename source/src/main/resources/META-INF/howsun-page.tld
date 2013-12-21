@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_1.xsd"
+		version="2.1">
+
+	<description>Howsun JSP Page Tag Library</description>
+	<tlib-version>3.0</tlib-version>
+	<short-name>h</short-name>
+	<uri>http://www.howsun.org/tags/page</uri>
+
+	<!-- 分页标签 -->
+	<tag>
+		<name>pagination</name>
+		<tag-class>org.howsun.dao.page.PaginationTag</tag-class>
+		<attribute>
+			<description>Is show total count</description>
+			<name>displayTotalRecords</name>
+			<required>false</required>
+			<type>java.lang.Boolean</type>
+		</attribute>
+		<!-- <attribute>
+			<description>Has jump page</description>
+			<name>hasJumpPage</name>
+			<required>false</required>
+			<type>java.lang.Boolean</type>
+		</attribute> -->
+		<attribute>
+			<name>displayTotalPages</name>
+			<required>false</required>
+			<type>java.lang.Boolean</type>
+		</attribute>
+		<attribute>
+			<name>currentPaginationStyle</name>
+			<required>false</required>
+			<type>java.lang.String</type>
+		</attribute>
+		<attribute>
+			<name>linkPaginationStyle</name>
+			<required>false</required>
+			<type>java.lang.String</type>
+		</attribute>
+	</tag>
+</taglib>

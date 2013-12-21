@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+            http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-3.0.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+            http://www.springframework.org/schema/aop
+            http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+           ">
+	<!--
+		context:property-placeholder
+		location="classpath*:META-INF/db.properties"/>
+	-->
+	<context:property-placeholder location="classpath*:META-INF/namespace.properties" order="2" />
+	<!--
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" >
+		<property name="locations">
+			<value>file:/opt/wf/${namespace}/db.properties</value>
+		</property>
+		<property name="order">
+			<value>1</value>
+		</property>
+		<property name="properties">
+			<value>zjh=tms</value>
+		</property>
+	</bean>
+	<context:property-placeholder location="file:/opt/wf/${namespace}/db.properties" order="0" />
+	  -->
+
+	<context:component-scan base-package="${base}" />
+
+	<!-- 数据源 -->
+	<bean id="dataSource" class="com.jolbox.bonecp.BoneCPDataSource" destroy-method="close">
+		<property name="jdbcUrl" value="${ConnetionURL}" />
+		<property name="username" value="${UserName}" />
+		<property name="password" value="${PassWord}" />
+		<property name="idleConnectionTestPeriod" value="${idleConnectionTestPeriod}" />
+		<property name="idleMaxAge" value="${IdleTimeout}" />
+		<property name="maxConnectionsPerPartition" value="${MaxPoolSize}" />
+		<property name="minConnectionsPerPartition" value="${MinPoolSize}" />
+		<property name="partitionCount" value="${partitionCount}" />
+		<property name="acquireIncrement" value="${acquireIncrement}" />
+		<property name="statementsCacheSize" value="${statementsCacheSize}" />
+		<property name="releaseHelperThreads" value="${releaseHelperThreads}" />
+		<property name="queryExecuteTimeLimit" value="${QurryTimeOut}" />
+		<property name="lazyInit" value="${lazyInit}" />
+		<property name="closeConnectionWatch" value="${closeConnectionWatch}" />
+		<property name="logStatementsEnabled" value="${logStatementsEnabled}" />
+	</bean>
+
+	<!-- Hibernate 配置 -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan" value="${entity}" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</prop>
+				<prop key="hibernate.hbm2ddl.auto">${ddl}</prop>
+				<prop key="hibernate.show_sql">${logStatementsEnabled}</prop>
+				<prop key="hibernate.format_sql">${formatStatementsEnabled}</prop>
+				<prop key="hibernate.jdbc.batch_size">${jdbcBatchSize}</prop>
+				<prop key="hibernate.query.substitutions">true 1, false 0</prop>
+				<prop key="hibernate.connection.SetBigStringTryClob">true</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!--  -->
+	<bean id="genericDao" class="org.howsun.dao.hibernatedao.HibernateGenericDao">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+
+	<!-- 配置事务管理并打开Spring声明式事务功能-->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!-- proxy-target-class默认为false只能代理接口，true可以代理类 -->
+	<tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true" />
+
+	<!-- 打开AOP织入功能     -->
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+
+	<!-- Spring 3 验证 需要去sun网站下载JSR-303规范 -->
+	<bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean" />
+
+	<!-- 异步线程池 -->
+	<bean id="taskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+		<property name="corePoolSize" value="10" />
+		<property name="maxPoolSize" value="1000" />
+	</bean>
+
+</beans>
