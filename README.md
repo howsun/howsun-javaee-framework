@@ -1,4 +1,5 @@
-<h1>howsun-javaee-framework</h1><br />
+<h1>howsun-javaee-framework</h1>
+<br />
 <p>Java应用层框架</p>
 <p>版本：1.0.8</p>
 <p>&nbsp;</p>
@@ -324,10 +325,11 @@ public class PersonServiceImpl implements PersonService{
 }</pre>
 </blockquote>可见使用Seeker接口的参数查询，业务层代码更加简洁。
 <p>&nbsp;</p>
-<h2>7、Redis缓存客户端</h2>
+<h2>7、Redis缓存客户端封装</h2>
+<p>注意：Redis客户端使用的是jedis。</p>
+<p>&nbsp;</p>
 <p>配置文件：</p>
-<pre>
-<p>
+<pre><p>
 &lt;bean id=&quot;server1&quot; class=&quot;org.howsun.redis.ShardedServer&quot; &gt;<br />
 	&lt;constructor-arg index=&quot;0&quot; value=&quot;IP地址&quot; /&gt;<br />
 	&lt;constructor-arg index=&quot;1&quot; value=&quot;6379&quot;/&gt;<br />
@@ -366,7 +368,10 @@ public class PersonServiceImpl implements PersonService{
 	&lt;property name=&quot;callback&quot;&gt;<br />
 		&lt;bean class=&quot;com.chinaot.core.cache.CacheHelper&quot;/&gt;<br />
 	&lt;/property&gt;<br />
-&lt;/bean&gt;<br />//注意这里做了个CacheHelper静态工具类，以所有要访问缓存的地方直接CacheHelper.get(xxx)方法即可</p></pre>
+&lt;/bean&gt;<br /></p></pre>
+
+<p>注意：由于jedis内部使用了线程池，客户没必须使用多例对象，这里做了个CacheHelper静态工具类，当客户端对象在实例化时，同步为CacheHelper赋值，所以在所有要访问缓存的地方直接调用CacheHelper.get(xxx)、CacheHelper.set(xxx,xx)方法即可</p>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h2>8、工具包</h2>
 <p>■安全工具 <br />
