@@ -1,7 +1,7 @@
-<h1>howsun-javaee-framework<br />
-</h1>
+<h1>howsun-javaee-framework</h1><br />
 <p>Java应用层框架</p>
-<p>版本：1.8</p>
+<p>版本：1.0.8</p>
+<p>&nbsp;</p>
 <h2>1、项目介绍</h2>
 <p>  这是一款居于Spring容器之上特别适用于中小企业应用的JavaEE快速开发框架，具有如下特性：</p>
 <p>1、跨服务调用（跨Spring容器，也可以使用类似Netty的通信中间件来实现）</p>
@@ -191,6 +191,138 @@ public class HomeController{</p>
     </tr>
   </table>
 </div>
+<h3>6.4、增强的Seeker参数查询</h3>
+<p>只需编写一个自定义的查询参数类实现Seeker接口，或者继承GeneralSeeker类</p>
+<p>下面以实现在MongoDB中存储的Person记录查询为例具体说明，首页新建一个PersonSeeker类：</p>
+<pre>
+<p>public class PersonSeeker extends GeneralSeeker implements Seeker {</p>
+<p> private static final long serialVersionUID = 9183107407293358219L;</p>
+<p> /**最大时间间隔查询为90天**/<br />
+  public static final long TIME_SLICES = 90L * 24 * 3600 * 1000;</p>
+<p> static{<br />
+  ORDER_FIELDS.put(&quot;created&quot;, &quot;创建时间&quot;);<br />
+  ORDER_FIELDS.put(&quot;updated&quot;, &quot;修改时间&quot;);<br />
+  ORDER_FIELDS.put(&quot;followers&quot;, &quot;粉丝数量&quot;);<br />
+  ORDER_FIELDS.put(&quot;friends&quot;, &quot;好友数量&quot;);<br />
+  ORDER_FIELDS.put(&quot;ffs&quot;, &quot;互相关注数量&quot;);<br />
+  ORDER_FIELDS.put(&quot;birthday&quot;, &quot;生日&quot;);<br />
+  ORDER_FIELDS.put(&quot;auth.logonWithMonth&quot;, &quot;月访问量&quot;);<br />
+  ORDER_FIELDS.put(&quot;auth.logonWithWeek&quot;, &quot;周访问量&quot;);<br />
+  ORDER_FIELDS.put(&quot;auth.logonWithDay&quot;, &quot;日访问量&quot;);<br />
+  ORDER_FIELDS.put(&quot;auth.logonTotal&quot;, &quot;总访问量&quot;);<br />
+  ORDER_FIELDS.put(&quot;auth.lastLogonTime&quot;, &quot;最后访问时间&quot;);<br />
+  }</p>
+<p> /**按用户ID查寻**/<br />
+  protected Set&lt;Long&gt; personIds = new HashSet&lt;Long&gt;(0);</p>
+<p> /**按昵称查**/<br />
+  protected String nickname;</p>
+<p> /**按真实姓名查**/<br />
+  protected String realname;</p>
+<p> /**按用户名查**/<br />
+  protected String username;</p>
+<p> /**是否锁定账号**/<br />
+  protected Boolean locked;</p>
+<p> /**按授了权的App查**/<br />
+  protected Set&lt;Long&gt; appIds = new HashSet&lt;Long&gt;(0);</p>
+<p> /**是否存在的字段**/<br />
+  protected Map&lt;String,Boolean&gt; existsFields = new HashMap&lt;String, Boolean&gt;(1,1);</p>
+<p> /**按起始创建时间查**/<br />
+  protected Date startCreated;</p>
+<p> /**按结束创建时间查**/<br />
+  protected Date endCreated;</p>
+<p> /**关注我的人**/<br />
+  protected int followers;</p>
+<p> /**好友数量：我关注的人数**/<br />
+  protected int friends;</p>
+<p> /**互相关注数量**/<br />
+  protected int ffs;<br />
+
+</p><p> /* (non-Javadoc)<br />
+  * @see com.chinaot.core.service.Seeker#buildCriteria()<br />
+  */<br />
+  @Override<br />
+  public Criteria buildCriteria(){<br />
+  	Criteria criteria = new Criteria();</p>
+<p> 	List&lt;Criteria&gt; criteras = new ArrayList&lt;Criteria&gt;(1);</p>
+<p> 	if(Collections.notEmpty(personIds)){<br />
+  		if(personIds.size() == 1){<br />
+  			for(Long id : personIds){<br />
+  				criteras.add(Criteria.where(&quot;_id&quot;).is(id));<br />
+  				break;<br />
+  			}<br />
+  		}else{<br />
+  			criteras.add(Criteria.where(&quot;_id&quot;).in(personIds));<br />
+  		}</p><p> 	}</p>
+<p> 	if(Strings.hasLength(username)){<br />
+  		criteras.add(Criteria.where(&quot;auth.accounts.username&quot;).is(username));<br />
+  	}</p>
+<p> 	//昵称是唯一值，应精确查找<br />
+  	if(Strings.hasLength(nickname)){<br />
+  		criteras.add(Criteria.where(&quot;nickname&quot;).is(nickname));<br />
+  	}</p>
+<p> 	if(Strings.hasLength(realname)){<br />
+  		criteras.add(Criteria.where(&quot;realname&quot;).regex(String.format(MongoGenericDaoUtil.REGEX_LIKE, realname)));<br />  	}</p>
+<p> 	if(followers &gt; 0){<br />
+  		criteras.add(Criteria.where(&quot;followers&quot;).gte(followers));<br />
+  	}</p>
+<p> 	if(friends &gt; 0){<br />
+  		criteras.add(Criteria.where(&quot;friends&quot;).gte(friends));<br />
+  	}</p>
+<p> 	if(ffs &gt; 0){<br />
+  		criteras.add(Criteria.where(&quot;ffs&quot;).gte(ffs));<br />
+  	}</p>
+<p> 	if(Collections.notEmpty(appIds)){<br />
+  		criteras.add(Criteria.where(&quot;apps.appId&quot;).in(appIds));<br />
+  	}</p>
+<p> 	if(locked != null){<br />
+  		List&lt;Criteria&gt; temps = new ArrayList&lt;Criteria&gt;();<br />
+  		temps.add(Criteria.where(&quot;auth.locked&quot;).exists(false));<br />
+  		temps.add(Criteria.where(&quot;auth.locked&quot;).is(locked));<br />
+  		criteras.add(new Criteria().orOperator(temps.toArray(new Criteria[]{})));<br />
+  	}</p>
+<p> 	if(existsFields != null &amp;&amp; existsFields.size() &gt; 0){<br />
+  		for(Map.Entry&lt;String, Boolean&gt; exist : existsFields.entrySet()){<br />
+  			criteras.add(Criteria.where(exist.getKey()).exists(exist.getValue()));<br />
+  		}<br />  	}</p>
+<p> 	 if(criteras.size() &gt; 0){<br />
+  		criteria.andOperator(criteras.toArray(new Criteria[]{}));<br />
+  	 }</p>
+<p> 	 return criteria;<br />
+  }</p>
+<p> 	@Override<br />
+  	public RQLConditionbind buildRQL() {<br />
+  		return throw new RuntimeException(&quot;不支持RDBMS数据库查询&quot;);<br />
+	}</p>
+	&nbsp;//Setter&amp;Getter...
+}
+
+
+public class PersonServiceImpl implements PersonService{
+
+	//在Service类实现查询的方法，仅如下几行代码就够了
+	public List&lt;Person&gt; getPersons(Seeker seeker, Set&lt;String&gt; fields, Page page){
+
+
+		//创建MongoDB查询对象
+		Query query = Query.query(seeker.buildCriteria());
+
+		//需要查询哪些字段
+		MongoGenericDaoUtil.bindFields(query, PersonUtil.checkFields(fields));
+
+		//排序
+		MongoGenericDaoUtil.bindOrders(query, seeker.getOrderBean());
+
+		//分页
+		MongoGenericDaoUtil.bindPaging(Person.class, dao.getMongoTemplate(), query, page);
+
+		//查询结果
+		List&lt;Person&gt; persons = dao.getMongoTemplate().find(query, Person.class);
+
+		return personj;
+  }
+
+}</pre>
+</blockquote>可见使用Seeker接口的参数查询，业务层代码更加简洁。
 <p>&nbsp;</p>
 <h2>7、Redis缓存客户端</h2>
 <p>配置文件：</p>
@@ -267,4 +399,6 @@ org.howsun.util.security.AES</p>
 <p>其它未列的请查看JavaDoc说明 </p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
+<p style="color:#F00;">敬告：howsun2.0将不再兼容1.x版本，新版是居于Spring4.0重新架构设计的，敬请期待。</p>
+<p style="color:#F00;">&nbsp;</p>
 <p>作者：张纪豪(zhangjihao@sohu.com)</p>
